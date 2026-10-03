@@ -1,0 +1,1393 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Paulebalooza · 11.–13. Dezember 2026 · Prag — NDA unterschreiben, Ticket drucken.">
+<title>Paulebalooza Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=IBM+Plex+Mono:wght@400;600&family=Press+Start+2P&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    color-scheme: dark;
+    --ground: #06040B;
+    --panel: #120C20;
+    --line: #3A2B5C;
+    --pink: #FF2D95;
+    --pink-deep: #B5125F;
+    --purple: #C13BFF;
+    --cyan: #30E3E3;
+    --cyan-deep: #117F88;
+    --red: #E0162B;
+    --yellow: #FFD23F;
+    --green: #4EFF9A;
+    --cream: #F5ECDC;
+    --paper: #FFFDF7;
+    --ink: #1A1030;
+    --ink-soft: #6B5A84;
+    --rule: #B8A98F;
+    --text: #EFE8FA;
+    --muted: #A496C4;
+    --display: 'Bungee', 'Arial Black', Impact, sans-serif;
+    --arcade: 'Press Start 2P', 'Courier New', monospace;
+    --mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { min-height: 100%; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ---------- Scene: synthwave grid, triangles, splatter, CRT ---------- */
+  .scene { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .glow {
+    position: absolute; left: 50%; top: 58%; width: 140vw; height: 60vh; transform: translateX(-50%);
+    background: radial-gradient(ellipse at 50% 60%, rgba(193,59,255,.28), rgba(255,45,149,.10) 40%, transparent 70%);
+  }
+  .grid {
+    position: absolute; left: -50%; right: -50%; bottom: -12%; height: 52%;
+    background-image:
+      linear-gradient(to right, rgba(255,45,149,.38) 2px, transparent 2px),
+      linear-gradient(to bottom, rgba(255,45,149,.38) 2px, transparent 2px);
+    background-size: 90px 90px;
+    transform: perspective(520px) rotateX(63deg);
+    transform-origin: 50% 0;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 35%);
+    mask-image: linear-gradient(to bottom, transparent, #000 35%);
+    animation: gridmove 2.4s linear infinite;
+  }
+  @keyframes gridmove { from { background-position: 0 0; } to { background-position: 0 90px; } }
+  .horizon {
+    position: absolute; left: 0; right: 0; bottom: 36.5%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--pink) 30%, var(--cyan) 70%, transparent);
+    opacity: .7; box-shadow: 0 0 18px rgba(48,227,227,.5);
+  }
+  .cars { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .tri {
+    position: absolute; left: 50%; top: 40px; width: min(560px, 120vw); transform: translateX(-50%) rotate(-4deg);
+    opacity: .5;
+  }
+  .splat { position: absolute; width: 360px; height: 360px; opacity: .55; }
+  .splat.a { left: -110px; top: 120px; transform: rotate(20deg); }
+  .splat.b { right: -140px; bottom: 60px; transform: rotate(-35deg) scale(1.15); }
+  .splat {
+    background:
+      radial-gradient(circle at 50% 50%, var(--red) 0 58px, transparent 59px),
+      radial-gradient(circle at 24% 36%, var(--red) 0 20px, transparent 21px),
+      radial-gradient(circle at 76% 30%, var(--red) 0 14px, transparent 15px),
+      radial-gradient(circle at 70% 72%, var(--red) 0 24px, transparent 25px),
+      radial-gradient(circle at 30% 76%, var(--red) 0 10px, transparent 11px),
+      radial-gradient(circle at 86% 56%, var(--red) 0 7px, transparent 8px),
+      radial-gradient(circle at 14% 58%, var(--red) 0 6px, transparent 7px),
+      radial-gradient(circle at 56% 12%, var(--red) 0 9px, transparent 10px),
+      radial-gradient(circle at 44% 90%, var(--red) 0 5px, transparent 6px),
+      radial-gradient(circle at 92% 84%, var(--red) 0 4px, transparent 5px);
+  }
+  .crt {
+    position: fixed; inset: 0; z-index: 5; pointer-events: none;
+    background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.16) 2px 4px);
+  }
+  .crt::after {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55) 100%);
+  }
+
+  /* ---------- Layout ---------- */
+  .wrap {
+    position: relative; z-index: 1;
+    max-width: 760px; margin: 0 auto;
+    padding-inline: 20px; padding-block: 28px 96px;
+  }
+
+  /* ---------- Marquee / Logo ---------- */
+  .marquee { text-align: center; padding-block: 18px 0; }
+  .insert {
+    font-family: var(--arcade); font-size: clamp(.62rem, 2.4vw, .86rem);
+    color: var(--cream); letter-spacing: .04em; margin: 0 0 22px;
+  }
+  .insert .coin { animation: blink 1.1s steps(1) infinite; }
+  .insert small { font-family: var(--mono); font-size: 1.1em; color: var(--muted); font-weight: 600; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .logo { margin: 0; line-height: .92; display: grid; justify-items: center; transform: skewX(-7deg); }
+  .word {
+    position: relative; isolation: isolate; display: inline-block;
+    font-family: var(--display); font-weight: 400;
+    font-size: clamp(2.7rem, 12vw, 7.4rem); letter-spacing: .01em;
+  }
+  .word::before {
+    content: attr(data-text); position: absolute; inset: 0; z-index: -1;
+    color: var(--pink-deep);
+    text-shadow: 2px 2px 0 #8A0E4C, 4px 4px 0 #5F0A35, 6px 6px 0 #3E0622, 8px 8px 0 #230311, 10px 12px 28px rgba(255,45,149,.45);
+  }
+  .word span {
+    background: linear-gradient(180deg, #FFC2E3 0%, #FF6DBF 38%, #FF2D95 50%, #C41C7B 52%, #FF4FA8 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .word.b { margin-top: -.06em; transform: translateX(5%); }
+  .word.b::before {
+    color: var(--cyan-deep);
+    text-shadow: 2px 2px 0 #0F6A72, 4px 4px 0 #0A4D53, 6px 6px 0 #063237, 8px 8px 0 #031A1C, 10px 12px 28px rgba(48,227,227,.45);
+  }
+  .word.b span {
+    background: linear-gradient(180deg, #F0FFFF 0%, #95F5F5 38%, #30E3E3 50%, #1C9BA3 52%, #62ECEC 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .level {
+    font-family: var(--arcade); color: var(--cyan);
+    font-size: clamp(.64rem, 2.6vw, .92rem); letter-spacing: .06em; margin: 26px 0 0;
+    text-shadow: 0 0 10px rgba(48,227,227,.5);
+  }
+  .tag { color: var(--muted); max-width: 46ch; margin: 14px auto 0; text-wrap: balance; }
+
+  /* ---------- HUD ---------- */
+  .hud {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px 20px; flex-wrap: wrap;
+    font-family: var(--arcade); font-size: .6rem; color: var(--yellow); letter-spacing: .04em;
+    padding: 14px 0; border-top: 2px solid var(--line); border-bottom: 2px solid var(--line);
+    margin: 30px 0 36px;
+  }
+  .hud .one { color: var(--pink); }
+  .hud .credits b { color: var(--cream); font-weight: 400; }
+  .hud-btn {
+    font: inherit; color: var(--cyan); background: none; border: 0; padding: 4px 0; cursor: pointer; letter-spacing: inherit;
+  }
+  .hud-btn[aria-pressed="false"] { color: var(--muted); }
+  .hud-btn:focus-visible { outline: 3px solid var(--cyan); outline-offset: 4px; }
+  .hud-group { display: inline-flex; gap: 18px; flex-wrap: wrap; }
+  #music[aria-pressed="true"] { color: var(--pink); text-shadow: 0 0 10px rgba(255,45,149,.6); }
+  #music[aria-pressed="true"]::after { content: ''; display: inline-block; width: .55em; height: .55em; margin-left: .7em; background: currentColor; vertical-align: 0; animation: blink .8s steps(1) infinite; }
+
+  .yt {
+    position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 4;
+    width: 240px; max-width: calc(100vw - 32px); aspect-ratio: 16 / 9;
+    background: #000; border: 2px solid var(--line); box-shadow: 0 10px 30px rgba(0,0,0,.6);
+  }
+  .yt iframe { display: block; width: 100%; height: 100%; border: 0; }
+
+  /* ---------- Das Dokument (NDA) ---------- */
+  .lv-free {
+    font-family: var(--arcade); font-size: .6rem; letter-spacing: .08em; color: var(--pink); margin: 0 0 18px; text-align: center;
+  }
+  .paper {
+    position: relative;
+    background: var(--cream);
+    background-image: repeating-linear-gradient(0deg, rgba(26,16,48,.03) 0 2px, transparent 2px 4px);
+    color: var(--ink);
+    box-shadow: 0 26px 60px rgba(0,0,0,.65), 8px 8px 0 var(--pink-deep);
+  }
+  .p-head {
+    position: relative; background: var(--ground); padding: 26px 28px 22px;
+    border-bottom: 3px solid var(--pink);
+  }
+  .p-head::after { content: ''; position: absolute; left: 0; right: 0; bottom: -7px; height: 2px; background: var(--cyan); }
+  .p-title {
+    font-family: var(--display); font-weight: 400; font-size: clamp(1.7rem, 7vw, 2.6rem); letter-spacing: .02em;
+    color: var(--pink); margin: 0; transform: skewX(-6deg); line-height: 1;
+    text-shadow: 3px 3px 0 var(--pink-deep);
+  }
+  .p-eyebrow { font-family: var(--arcade); font-size: .5rem; letter-spacing: .1em; color: var(--cyan); margin: 14px 0 0; }
+  .p-sub { color: var(--cream); margin: 6px 0 0; font-size: .95rem; }
+  .p-body { padding: 34px 28px 28px; font-size: .95rem; line-height: 1.75; }
+  .p-body p { margin: 0 0 16px; }
+  .inline {
+    display: inline-block; vertical-align: baseline; font: inherit; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .06em;
+    background: var(--paper); color: var(--ink); border: 0; border-bottom: 2px solid var(--ink);
+    padding: 2px 8px; width: min(100%, 26ch); margin: 0 4px 4px 0;
+  }
+  .inline::placeholder { color: #9C8FB5; font-weight: 400; text-transform: none; letter-spacing: 0; }
+  .inline:focus { outline: none; border-bottom-color: var(--pink); background: #FFF0F7; }
+  .rules { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 14px; }
+  .rules li { display: grid; grid-template-columns: 76px 1fr; gap: 12px; align-items: baseline; }
+  .rn { font-family: var(--arcade); font-size: .5rem; letter-spacing: .08em; color: var(--pink-deep); padding-top: 5px; }
+  .penalty {
+    display: grid; grid-template-columns: 76px 1fr; gap: 12px; align-items: baseline;
+    border: 2px solid var(--ink); padding: 14px 16px; margin: 24px 0 0; background: var(--paper);
+  }
+  .penalty b { font-weight: 600; }
+  .p-divider {
+    display: flex; align-items: center; gap: 14px; margin: 34px 0 20px;
+    font-family: var(--arcade); font-size: .5rem; letter-spacing: .1em; color: var(--pink-deep); white-space: nowrap;
+  }
+  .p-divider::before, .p-divider::after { content: ''; flex: 1; border-top: 2px dashed var(--rule); }
+  .p-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .p-fields label, .sig-wrap > label {
+    font-family: var(--arcade); font-size: .46rem; letter-spacing: .1em; color: var(--ink-soft); display: block; margin: 0 0 7px;
+  }
+  .p-input {
+    width: 100%; font: inherit; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+    background: var(--paper); color: var(--ink); border: 2px solid var(--ink); padding: 10px 12px;
+  }
+  .p-input::placeholder { color: #9C8FB5; font-weight: 400; text-transform: none; letter-spacing: 0; }
+  .p-input:focus { outline: none; border-color: var(--pink); box-shadow: 0 0 0 3px rgba(255,45,149,.2); }
+  .sig-wrap { grid-column: 1 / -1; }
+  .sig-box { position: relative; height: 180px; background: var(--paper); border: 2px dashed var(--ink); }
+  .sig-box.has { border-style: solid; }
+  .sig-box canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+  .sig-ph {
+    position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none;
+    font-family: var(--arcade); font-size: .5rem; letter-spacing: .1em; color: #9C8FB5; text-align: center; line-height: 2;
+  }
+  .sig-box.has .sig-ph { display: none; }
+  .sig-line { position: absolute; left: 18px; right: 18px; bottom: 36px; border-top: 1px solid var(--rule); pointer-events: none; }
+  .sig-x { position: absolute; left: 14px; bottom: 40px; font-family: var(--arcade); font-size: .6rem; color: var(--rule); pointer-events: none; }
+  .sig-tools { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; font-size: .78rem; color: var(--ink-soft); }
+  .lnk { font: inherit; font-weight: 600; background: none; border: 0; color: var(--pink-deep); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 0; }
+  .lnk:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
+  .p-foot { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: 30px 0 0; font-size: .7rem; color: var(--ink-soft); letter-spacing: .04em; }
+
+  /* ---------- Abschicken ---------- */
+  .submit { margin-top: 48px; text-align: center; }
+  .submit .actions { justify-content: center; }
+  .hint { font-family: var(--arcade); font-size: .52rem; letter-spacing: .08em; color: var(--yellow); margin: 18px 0 0; line-height: 2; }
+  .hint.ok { color: var(--green); }
+
+  .btn {
+    font-family: var(--arcade); font-size: .7rem; line-height: 1.4; letter-spacing: .02em; text-transform: uppercase;
+    padding: 16px 22px; background: var(--pink); color: #15051A; border: 0; cursor: pointer;
+    box-shadow: 5px 5px 0 var(--pink-deep);
+    transition: transform .08s, box-shadow .08s;
+    max-width: 100%;
+  }
+  .btn:hover { transform: translate(-1px, -1px); box-shadow: 6px 6px 0 var(--pink-deep); }
+  .btn:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--pink-deep); }
+  .btn:focus-visible { outline: 3px solid var(--cyan); outline-offset: 4px; }
+  .btn:disabled, .btn:disabled:hover { background: #3A2E52; color: #8A7DA8; box-shadow: none; cursor: not-allowed; transform: none; }
+  .btn.cyan { background: var(--cyan); box-shadow: 5px 5px 0 var(--cyan-deep); }
+  .btn.cyan:hover { box-shadow: 6px 6px 0 var(--cyan-deep); }
+  .btn.cyan:active { box-shadow: 2px 2px 0 var(--cyan-deep); }
+  .btn.ghost { background: transparent; color: var(--cream); box-shadow: inset 0 0 0 2px var(--line); }
+  .btn.ghost:hover { box-shadow: inset 0 0 0 2px var(--cream); }
+  .btn.ghost:active { box-shadow: inset 0 0 0 2px var(--cream); }
+  .actions { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  .msg { font-size: .9rem; color: var(--yellow); min-height: 1.5em; margin: 14px 0 0; }
+  .msg.err { color: #FF7A8A; }
+
+  /* ---------- Printer ---------- */
+  .printer { margin-top: 64px; display: grid; justify-items: center; }
+  .machine { width: min(440px, 100%); position: relative; }
+  .m-cap { height: 22px; margin: 0 12px; background: #2B2142; border: 2px solid #4D3C74; border-bottom: 0; border-radius: 12px 12px 0 0; }
+  .m-body {
+    position: relative; z-index: 2;
+    background: linear-gradient(#241B3A, #140E22);
+    border: 2px solid #4D3C74; padding: 16px 18px 0;
+    box-shadow: 0 18px 44px rgba(0,0,0,.65);
+  }
+  .m-row {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
+    font-family: var(--arcade); font-size: .52rem; letter-spacing: .06em; color: var(--muted);
+  }
+  .m-row .st { color: var(--cream); display: inline-flex; align-items: center; gap: 8px; }
+  .led { width: 10px; height: 10px; border-radius: 50%; background: var(--yellow); box-shadow: 0 0 8px var(--yellow); flex: none; }
+  .led.busy { background: var(--red); box-shadow: 0 0 8px var(--red); animation: blink .28s steps(1) infinite; }
+  .led.done { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .rail { position: relative; height: 6px; margin: 16px 0 0; background: #0B0714; border-radius: 3px; }
+  .head { position: absolute; left: 0; top: 0; width: 44px; height: 6px; background: var(--cyan); border-radius: 3px; opacity: 0; }
+  .printing .head { opacity: 1; animation: head .22s linear infinite alternate; }
+  @keyframes head { to { left: calc(100% - 44px); } }
+  .m-slot {
+    height: 16px; margin: 14px -18px 0; background: #020107;
+    border-top: 2px solid #4D3C74;
+    box-shadow: inset 0 4px 8px #000, 0 0 16px rgba(48,227,227,.28);
+  }
+  .m-out { padding: 0 26px; overflow: hidden; }
+  .m-out.loose { overflow: visible; }
+
+  .ticket {
+    width: 100%; position: relative;
+    background: var(--cream);
+    background-image: repeating-linear-gradient(0deg, rgba(26,16,48,.035) 0 2px, transparent 2px 4px);
+    color: var(--ink); font-family: var(--mono);
+    padding: 20px 20px 0;
+    box-shadow: 0 14px 30px rgba(0,0,0,.6);
+    transform: translateY(-101%);
+    --z: 10px;
+    -webkit-mask:
+      conic-gradient(from -45deg at bottom, #000 90deg, #0000 0) bottom / calc(2 * var(--z)) var(--z) repeat-x,
+      linear-gradient(#000 0 0) top / 100% calc(100% - var(--z)) no-repeat;
+    mask:
+      conic-gradient(from -45deg at bottom, #000 90deg, #0000 0) bottom / calc(2 * var(--z)) var(--z) repeat-x,
+      linear-gradient(#000 0 0) top / 100% calc(100% - var(--z)) no-repeat;
+  }
+  .printing .ticket { animation: emerge 13.2s steps(132, end) forwards; }
+  @keyframes emerge { from { transform: translateY(-101%); } to { transform: translateY(0); } }
+  .ticket.out { animation: none; transform: translateY(0); }
+  .ticket.torn { animation: tear .55s ease-out forwards; }
+  @keyframes tear {
+    0% { transform: translateY(0) rotate(0); }
+    45% { transform: translateY(8px) rotate(0); }
+    100% { transform: translateY(26px) rotate(-1.6deg); }
+  }
+
+  .t-head {
+    display: flex; justify-content: space-between; gap: 10px;
+    font-family: var(--arcade); font-size: .48rem; letter-spacing: .1em; color: var(--ink-soft);
+  }
+  .t-logo {
+    font-family: var(--display); font-weight: 400; font-size: clamp(1.9rem, 8vw, 2.4rem); line-height: .95;
+    margin: 16px 0 6px; transform: skewX(-6deg); color: #D6207A;
+  }
+  .t-logo span { display: block; color: var(--ink); padding-left: .35em; }
+  .t-level { font-family: var(--arcade); font-size: .52rem; letter-spacing: .1em; color: #0F7D86; margin: 0 0 18px; }
+  .t-fields { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+  .t-fields > div { min-width: 0; }
+  .t-fields dt { font-family: var(--arcade); font-size: .46rem; letter-spacing: .1em; color: var(--ink-soft); margin: 0 0 5px; }
+  .t-fields dd { margin: 0; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; font-size: .95rem; overflow-wrap: anywhere; }
+  .t-fields dd.wide { font-size: 1.15rem; }
+  .t-bar { display: flex; height: 52px; margin: 18px 0 0; align-items: stretch; }
+  .t-bar i { display: block; height: 100%; background: var(--ink); }
+  .t-bar i.gap { background: transparent; }
+  .t-foot {
+    display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+    font-size: .68rem; color: var(--ink-soft); margin: 8px 0 0; letter-spacing: .04em;
+  }
+  .t-stamp {
+    position: absolute; right: 16px; top: 78px; transform: rotate(-14deg);
+    border: 3px solid var(--red); color: var(--red);
+    font-family: var(--arcade); font-size: .58rem; letter-spacing: .1em; line-height: 1.5;
+    padding: 7px 10px; text-align: center; opacity: .88; mix-blend-mode: multiply;
+  }
+  .t-stamp small { display: block; font-size: .42rem; letter-spacing: .08em; }
+  .t-stub {
+    position: relative; margin: 18px -20px 0; padding: 14px 20px 22px;
+    border-top: 2px dashed var(--rule);
+    display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+    font-family: var(--arcade); font-size: .46rem; letter-spacing: .08em; color: var(--ink-soft);
+  }
+  .t-stub::before, .t-stub::after {
+    content: ''; position: absolute; top: -10px; width: 18px; height: 18px; border-radius: 50%; background: var(--ground);
+  }
+  .t-stub::before { left: -9px; }
+  .t-stub::after { right: -9px; }
+
+  .after { margin-top: 48px; text-align: center; display: grid; gap: 18px; justify-items: center; }
+  .after p { margin: 0; color: var(--muted); max-width: 46ch; text-wrap: balance; }
+  .after p b { color: var(--cream); font-weight: 600; }
+  .after .actions { justify-content: center; }
+
+  .foot { margin-top: 72px; text-align: center; font-size: .82rem; color: var(--muted); }
+  .foot .lbl { font-family: var(--arcade); font-size: .52rem; letter-spacing: .1em; color: var(--pink); display: block; margin-bottom: 8px; }
+  .foot a { color: var(--cyan); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  .foot a:hover { color: var(--cream); }
+
+  @media (max-width: 520px) {
+    .p-head { padding: 22px 18px 20px; }
+    .p-body { padding: 28px 18px 24px; }
+    .p-fields { grid-template-columns: 1fr; }
+    .rules li, .penalty { grid-template-columns: 1fr; gap: 4px; }
+    .paper { box-shadow: 0 26px 60px rgba(0,0,0,.65), 5px 5px 0 var(--pink-deep); }
+    .t-fields { grid-template-columns: 1fr; gap: 12px; }
+    .t-stamp { top: 70px; right: 10px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .grid, .insert .coin, .led.busy, .printing .head, #music[aria-pressed="true"]::after { animation: none; }
+    .printing .ticket { animation-duration: 3.3s; animation-timing-function: ease-out; }
+    .ticket.torn { animation-duration: .2s; }
+  }
+</style>
+</head>
+<body>
+<div class="scene" aria-hidden="true">
+  <div class="glow"></div>
+  <div class="grid"></div>
+  <div class="horizon"></div>
+  <canvas class="cars" id="cars"></canvas>
+  <svg class="tri" viewBox="0 0 400 360">
+    <defs>
+      <pattern id="pg" width="18" height="18" patternUnits="userSpaceOnUse">
+        <path d="M18 0H0V18" fill="none" stroke="#FF2D95" stroke-width="1" opacity=".55"/>
+      </pattern>
+    </defs>
+    <polygon points="200,70 345,330 55,330" fill="url(#pg)" stroke="#FF2D95" stroke-width="2"/>
+    <polygon points="200,12 390,345 10,345" fill="none" stroke="#30E3E3" stroke-width="3"/>
+    <polygon points="318,40 372,130 264,130" fill="none" stroke="#C13BFF" stroke-width="2"/>
+    <polygon points="48,210 96,290 0,290" fill="none" stroke="#30E3E3" stroke-width="2"/>
+  </svg>
+  <div class="splat a"></div>
+  <div class="splat b"></div>
+</div>
+<div class="crt" aria-hidden="true"></div>
+
+<main class="wrap">
+  <header class="marquee">
+    <p class="insert"><span class="coin">INSERT COIN</span> <small>to continue</small></p>
+    <h1 class="logo" aria-label="Paulebalooza">
+      <span class="word a" data-text="PAULE" aria-hidden="true"><span>PAULE</span></span>
+      <span class="word b" data-text="BALOOZA" aria-hidden="true"><span>BALOOZA</span></span>
+    </h1>
+    <p class="level" id="level-line">LEVEL 1: LESEN</p>
+    <p class="tag">NDA lesen, ausfüllen, unterschreiben, abschicken — dann druckt der Automat dein Ticket.</p>
+  </header>
+
+  <div class="hud" role="status" aria-live="polite">
+    <span><span class="one">1UP</span> PLAYER READY</span>
+    <span class="credits">CREDITS <b id="credits">0</b>/2</span>
+    <span class="hud-group">
+      <button class="hud-btn" id="music" type="button" aria-pressed="false">MUSIC: OFF</button>
+      <button class="hud-btn" id="sound" type="button" aria-pressed="true">SFX: ON</button>
+    </span>
+  </div>
+
+  <section aria-label="NDA">
+    <p class="lv-free">LEVEL 1 · LESEN</p>
+    <form class="paper" id="nda" novalidate>
+      <div class="p-head">
+        <h2 class="p-title">PAULEBALOOZA</h2>
+        <p class="p-eyebrow">INSERT COIN TO CONTINUE · PLAYER EDITION 1999</p>
+        <p class="p-sub">NDA · Geheimhaltungsvereinbarung</p>
+      </div>
+      <div class="p-body">
+        <p>Hiermit bestätige ich,
+          <input class="inline" id="name" type="text" maxlength="40" autocomplete="name" placeholder="Name in Druckbuchstaben" spellcheck="false" aria-label="Name in Druckbuchstaben">
+          dass ich an der Veranstaltung PAULEBALOOZA teilnehme, Stillschweigen über alles bewahre, was dort passiert, und die folgenden fünf Regeln gelesen, verstanden und akzeptiert habe.</p>
+
+        <ol class="rules" id="rules"></ol>
+
+        <div class="penalty"><span class="rn">STRAFE</span><span id="penalty"></span></div>
+
+        <div class="p-divider">LEVEL 2 · UNTERSCHREIBEN</div>
+
+        <div class="p-fields">
+          <div>
+            <label for="place">Ort</label>
+            <input class="p-input" id="place" type="text" maxlength="40" autocomplete="address-level2" placeholder="Wo du gerade bist" spellcheck="false">
+          </div>
+          <div>
+            <label for="date">Datum</label>
+            <input class="p-input" id="date" type="text" maxlength="12" inputmode="numeric" placeholder="TT.MM.JJJJ">
+          </div>
+          <div class="sig-wrap">
+            <label for="sig">Unterschrift</label>
+            <div class="sig-box" id="sig-box">
+              <canvas id="sig" aria-label="Unterschriftsfeld – mit Finger oder Maus unterschreiben"></canvas>
+              <span class="sig-ph">HIER UNTERSCHREIBEN<br>FINGER · STIFT · MAUS</span>
+              <span class="sig-x" aria-hidden="true">X</span>
+              <span class="sig-line" aria-hidden="true"></span>
+            </div>
+            <div class="sig-tools">
+              <span>Ungefähr so wie auf deinem Ausweis. Oder besser.</span>
+              <button class="lnk" id="sig-clear" type="button">Löschen</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-foot"><span>PAULEBALOOZA · Player Edition 1999</span><span>Seite 1/1</span></div>
+      </div>
+    </form>
+
+    <div class="submit">
+      <p class="lv-free">LEVEL 3 · ABSCHICKEN</p>
+      <div class="actions">
+        <button class="btn cyan" id="btn-start" type="button" disabled>Press Start — NDA abschicken</button>
+      </div>
+      <p class="hint" id="hint" role="status" aria-live="polite"></p>
+      <p class="msg" id="msg-submit" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="printer" id="printer" hidden aria-label="Ticketdrucker">
+    <p class="lv-free">BONUS STAGE: TICKET</p>
+    <div class="machine" id="machine">
+      <div class="m-cap"></div>
+      <div class="m-body">
+        <div class="m-row">
+          <span>PB-1999 · TICKET DISPENSER</span>
+          <span class="st"><span class="led" id="led"></span><span id="status">READY</span></span>
+        </div>
+        <div class="rail"><div class="head"></div></div>
+        <div class="m-slot"></div>
+      </div>
+      <div class="m-out" id="m-out">
+        <div class="ticket" id="ticket">
+          <div class="t-head"><span>ADMIT ONE</span><span id="t-no">PB-1999-0000</span></div>
+          <div class="t-logo">PAULE<span>BALOOZA</span></div>
+          <div class="t-level">LEVEL 1 · EINLASS · 1 PLAYER</div>
+          <dl class="t-fields">
+            <div><dt>Spieler</dt><dd class="wide" id="t-name">—</dd></div>
+            <div><dt>Datum</dt><dd id="t-date">—</dd></div>
+            <div><dt>Ort</dt><dd id="t-loc">—</dd></div>
+            <div><dt>Info</dt><dd id="t-info">—</dd></div>
+          </dl>
+          <div class="t-bar" id="t-bar" aria-hidden="true"></div>
+          <div class="t-foot"><span>NDA SIGNIERT <span id="t-time">—</span></span><span>NICHT ÜBERTRAGBAR</span></div>
+          <div class="t-stamp" aria-hidden="true">SIGNED<small>&amp; SEALED</small></div>
+          <div class="t-stub"><span>KONTROLLABSCHNITT</span><span id="t-stub-no">PB-1999-0000</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="after" id="after" hidden>
+      <p><b>Screenshot machen = Ticket in der Tasche.</b> Dein unterschriebenes NDA kannst du dir zusätzlich als PDF sichern.</p>
+      <div class="actions">
+        <button class="btn" id="btn-pdf" type="button">Signiertes NDA als PDF</button>
+        <button class="btn ghost" id="btn-back" type="button">Zurück zum Dokument</button>
+      </div>
+      <p class="msg" id="msg-after" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span class="lbl">SOUNDTRACK-VIBE</span>
+    <a href="https://www.youtube.com/watch?v=mP2Pmc0pSuE" target="_blank" rel="noopener">Hotline Miami Soundtrack – „Musik" auf YouTube</a>
+  </footer>
+</main>
+
+<script>
+  // ---------- Event-Daten: hier anpassen ----------
+  const EVENT = {
+    name: 'PAULEBALOOZA',
+    date: '11.–13. Dezember 2026',
+    location: 'Prag',
+    info: 'BYOB · Bring your own Bags',
+    pdfFilename: 'paulebalooza-nda-signiert',
+  };
+  // Optional: Endpoint, der das signierte NDA entgegennimmt (POST, JSON: name, place, date, signedAt, ticket, signaturePng).
+  // Leer lassen = alles bleibt im Browser des Gastes.
+  const UPLOAD_URL = '';
+
+  const RULES = [
+    'Ischen bleiben daheim.',
+    'Foto- und Videoaufnahmen, die während Paulebalooza getätigt werden, dürfen nicht an Ischen oder die Öffentlichkeit gelangen.',
+    'Paulebalooza ist für die Boys. Der "Wo ist?"-Standort wird ausgeschaltet.',
+    'Wer sich ankotzt, muss weitersaufen.',
+    'Alle Dienstleistungen, die während des Festivals entgegengenommen werden (z. B. Friseurbesuche, Maniküre oder Massagen), bleiben auf Paulebalooza.',
+  ];
+  const PENALTY = 'Bei Verletzung einer dieser Regeln muss dem Veranstalter eine Kiste Bier gekauft werden.';
+
+  const $ = (id) => document.getElementById(id);
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const state = { sound: true, music: true, signed: null };
+  try {
+    state.sound = localStorage.getItem('pb_sound') !== '0';
+    state.music = localStorage.getItem('pb_music') !== '0';
+    const n = localStorage.getItem('pb_name'); if (n) $('name').value = n;
+    const p = localStorage.getItem('pb_place'); if (p) $('place').value = p;
+  } catch (e) { /* Browser-Storage nicht verfügbar – egal */ }
+
+  // Regeln ins Dokument
+  $('rules').innerHTML = RULES.map((r, i) => '<li><span class="rn">REGEL ' + (i + 1) + '</span><span></span></li>').join('');
+  [...$('rules').querySelectorAll('li span:last-child')].forEach((el, i) => { el.textContent = RULES[i]; });
+  $('penalty').textContent = PENALTY;
+  const today = () => new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  if (!$('date').value) $('date').value = today();
+
+  // ---------- Capabilities (Artifact-Viewer) ----------
+  function cap(name) {
+    try {
+      if (window.claude && typeof window.claude.use === 'function') return window.claude.use(name);
+    } catch (e) { return Promise.resolve(null); }
+    return Promise.resolve(undefined); // undefined = selbst gehostet, kein Viewer
+  }
+  const inArtifact = !!window.claude;
+
+  // ---------- Sound (8-bit, WebAudio) ----------
+  let audio = null;
+  function getCtx() {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === 'suspended') audio.resume();
+    return audio;
+  }
+  function beep(freq, dur, type, gain, when) {
+    if (!state.sound) return;
+    try {
+      getCtx();
+      const t = audio.currentTime + (when || 0);
+      const o = audio.createOscillator(); const g = audio.createGain();
+      o.type = type || 'square'; o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(gain || .05, t);
+      g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      o.connect(g); g.connect(audio.destination);
+      o.start(t); o.stop(t + dur + .02);
+    } catch (e) { /* kein Audio – egal */ }
+  }
+  const sfx = {
+    coin() { beep(988, .09, 'square', .05); beep(1319, .32, 'square', .05, .09); },
+    tick() { beep(2600 + Math.random() * 400, .018, 'square', .018); },
+    done() { beep(523, .1, 'square', .05); beep(659, .1, 'square', .05, .1); beep(784, .1, 'square', .05, .2); beep(1047, .35, 'square', .05, .3); },
+    nope() { beep(180, .18, 'sawtooth', .04); },
+    pen() { beep(1800, .012, 'triangle', .008); },
+  };
+  const soundBtn = $('sound');
+  function renderSound() {
+    soundBtn.setAttribute('aria-pressed', String(state.sound));
+    soundBtn.textContent = state.sound ? 'SFX: ON' : 'SFX: OFF';
+  }
+  soundBtn.addEventListener('click', () => {
+    state.sound = !state.sound;
+    try { localStorage.setItem('pb_sound', state.sound ? '1' : '0'); } catch (e) {}
+    renderSound();
+    if (state.sound) sfx.coin();
+  });
+  renderSound();
+
+  // ---------- Musik ----------
+  // Im Artifact-Viewer: prozedural erzeugter Synthwave-Loop (WebAudio, kein externes Material).
+  // Selbst gehostet: eingebetteter YouTube-Player mit dem Original-Track.
+  const YT_ID = 'mP2Pmc0pSuE';
+
+  const synth = (() => {
+    const BPM = 124, SPB = 60 / BPM, STEP = SPB / 4, LOOP = 128; // 8 Takte à 16 Sechzehntel
+    // Am · F · Dm · E — je 2 Takte, dunkel und treibend
+    const CHORDS = [[57, 60, 64], [53, 57, 60], [50, 53, 57], [52, 56, 59]];
+    const ROOTS = [33, 29, 26, 28];
+    const BASS = [0, 0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12, 0, 0, 12, 12];
+    const ARP = [0, 1, 2, 3, 2, 1, 0, 1, 2, 3, 2, 1, 0, 2, 3, 2];
+    const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
+    let ctx, master, revSend, arpBus, padBus, noise, timer = null, nextTime = 0, step = 0;
+    let playing = false;
+
+    function build() {
+      ctx = getCtx();
+      master = ctx.createGain(); master.gain.value = 0.42;
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -16; comp.ratio.value = 4; comp.attack.value = .004; comp.release.value = .18;
+      master.connect(comp).connect(ctx.destination);
+      noise = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+      const d = noise.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const len = Math.floor(ctx.sampleRate * 1.9);
+      const ir = ctx.createBuffer(2, len, ctx.sampleRate);
+      for (let c = 0; c < 2; c++) {
+        const ch = ir.getChannelData(c);
+        for (let i = 0; i < len; i++) ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6);
+      }
+      const rev = ctx.createConvolver(); rev.buffer = ir;
+      revSend = ctx.createGain(); revSend.gain.value = 0.32;
+      revSend.connect(rev).connect(master);
+      arpBus = ctx.createGain(); arpBus.gain.value = 1;
+      const dl = ctx.createDelay(1); dl.delayTime.value = STEP * 3;
+      const fb = ctx.createGain(); fb.gain.value = 0.34;
+      const dlf = ctx.createBiquadFilter(); dlf.type = 'lowpass'; dlf.frequency.value = 2600;
+      arpBus.connect(master); arpBus.connect(revSend);
+      arpBus.connect(dl); dl.connect(dlf); dlf.connect(fb); fb.connect(dl); dlf.connect(master);
+      padBus = ctx.createGain(); padBus.gain.value = 1;
+      padBus.connect(master);
+      const padRev = ctx.createGain(); padRev.gain.value = 0.5; padBus.connect(padRev).connect(revSend);
+    }
+    function kick(t) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.setValueAtTime(165, t); o.frequency.exponentialRampToValueAtTime(42, t + .11);
+      g.gain.setValueAtTime(.95, t); g.gain.exponentialRampToValueAtTime(.001, t + .33);
+      o.connect(g).connect(master); o.start(t); o.stop(t + .36);
+    }
+    function snare(t) {
+      const n = ctx.createBufferSource(); n.buffer = noise;
+      const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1900; f.Q.value = .8;
+      const g = ctx.createGain(); g.gain.setValueAtTime(.7, t); g.gain.exponentialRampToValueAtTime(.001, t + .22);
+      n.connect(f).connect(g); g.connect(master); g.connect(revSend);
+      n.start(t); n.stop(t + .25);
+      const o = ctx.createOscillator(), og = ctx.createGain(); o.type = 'triangle';
+      o.frequency.setValueAtTime(190, t); og.gain.setValueAtTime(.35, t); og.gain.exponentialRampToValueAtTime(.001, t + .12);
+      o.connect(og).connect(master); o.start(t); o.stop(t + .14);
+    }
+    function hat(t, open) {
+      const n = ctx.createBufferSource(); n.buffer = noise;
+      const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 8200;
+      const g = ctx.createGain(); g.gain.setValueAtTime(open ? .14 : .11, t);
+      g.gain.exponentialRampToValueAtTime(.001, t + (open ? .3 : .045));
+      n.connect(f).connect(g).connect(master); n.start(t); n.stop(t + .32);
+    }
+    function bass(t, midi) {
+      const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = mtof(midi);
+      const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 5;
+      f.frequency.setValueAtTime(1500, t); f.frequency.exponentialRampToValueAtTime(230, t + .17);
+      const g = ctx.createGain(); g.gain.setValueAtTime(.0001, t);
+      g.gain.linearRampToValueAtTime(.42, t + .006); g.gain.exponentialRampToValueAtTime(.001, t + STEP * .95);
+      o.connect(f).connect(g).connect(master); o.start(t); o.stop(t + STEP);
+    }
+    function arp(t, midi) {
+      const o = ctx.createOscillator(); o.type = 'square'; o.frequency.value = mtof(midi);
+      const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 2;
+      f.frequency.setValueAtTime(3200, t); f.frequency.exponentialRampToValueAtTime(900, t + STEP * 1.4);
+      const g = ctx.createGain(); g.gain.setValueAtTime(.0001, t);
+      g.gain.linearRampToValueAtTime(.11, t + .004); g.gain.exponentialRampToValueAtTime(.001, t + STEP * 1.6);
+      o.connect(f).connect(g).connect(arpBus); o.start(t); o.stop(t + STEP * 1.7);
+    }
+    function pad(t, chord, dur) {
+      const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 950; f.Q.value = .7;
+      const g = ctx.createGain(); g.gain.setValueAtTime(.0001, t);
+      g.gain.linearRampToValueAtTime(.045, t + .5); g.gain.setValueAtTime(.045, t + dur - .35);
+      g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      f.connect(g).connect(padBus);
+      chord.forEach((m) => [-8, 8].forEach((cents) => {
+        const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = mtof(m); o.detune.value = cents;
+        o.connect(f); o.start(t); o.stop(t + dur + .05);
+      }));
+    }
+    function pump(t) {
+      padBus.gain.cancelScheduledValues(t);
+      padBus.gain.setValueAtTime(.3, t);
+      padBus.gain.linearRampToValueAtTime(1, t + SPB * .6);
+    }
+    function playStep(s, t) {
+      const bar = Math.floor(s / 16), i = s % 16, ci = Math.floor(bar / 2);
+      const chord = CHORDS[ci], root = ROOTS[ci];
+      if (s % 32 === 0) pad(t, chord, SPB * 8);
+      if (i % 4 === 0) { kick(t); pump(t); }
+      if (i === 4 || i === 12) snare(t);
+      if (i % 2 === 0) hat(t, i === 14 && bar % 2 === 1);
+      if (BASS[i] >= 0) bass(t, root + BASS[i]);
+      const a = ARP[(s + bar * 2) % 16];
+      arp(t, (a === 3 ? chord[0] + 12 : chord[a]) + 12);
+    }
+    function tick() {
+      try {
+        while (nextTime < ctx.currentTime + .25) { playStep(step, nextTime); nextTime += STEP; step = (step + 1) % LOOP; }
+      } catch (e) { stop(); }
+    }
+    function start() {
+      if (playing) return;
+      try {
+        if (!ctx) build(); else getCtx();
+        master.gain.cancelScheduledValues(ctx.currentTime);
+        master.gain.setValueAtTime(.0001, ctx.currentTime);
+        master.gain.linearRampToValueAtTime(.42, ctx.currentTime + 1.2);
+        step = 0; nextTime = ctx.currentTime + .05;
+        timer = setInterval(tick, 40); playing = true;
+      } catch (e) { playing = false; }
+    }
+    function stop() {
+      if (!playing) return;
+      clearInterval(timer); timer = null; playing = false;
+      try {
+        const t = ctx.currentTime;
+        master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(master.gain.value, t);
+        master.gain.linearRampToValueAtTime(.0001, t + .4);
+      } catch (e) {}
+    }
+    return { start, stop, get playing() { return playing; } };
+  })();
+
+  let ytBox = null;
+  function ytStart() {
+    if (ytBox) return;
+    ytBox = document.createElement('div'); ytBox.className = 'yt';
+    const f = document.createElement('iframe');
+    f.src = 'https://www.youtube-nocookie.com/embed/' + YT_ID + '?autoplay=1&loop=1&playlist=' + YT_ID + '&rel=0';
+    f.allow = 'autoplay; encrypted-media'; f.title = 'Paulebalooza Soundtrack';
+    ytBox.appendChild(f); document.body.appendChild(ytBox);
+  }
+  function ytStop() { if (ytBox) { ytBox.remove(); ytBox = null; } }
+
+  const musicBtn = $('music');
+  function musicApply() {
+    if (state.music) { inArtifact ? synth.start() : ytStart(); }
+    else { synth.stop(); ytStop(); }
+    musicBtn.setAttribute('aria-pressed', String(state.music));
+    musicBtn.textContent = state.music ? 'MUSIC: ON' : 'MUSIC: OFF';
+  }
+  musicBtn.addEventListener('click', () => {
+    state.music = !state.music;
+    try { localStorage.setItem('pb_music', state.music ? '1' : '0'); } catch (e) {}
+    musicApply();
+  });
+  // Musik ist standardmäßig an. Browser erlauben Ton aber erst nach einer Geste:
+  // Läuft der AudioContext schon (Seite wurde zuvor benutzt), sofort starten – sonst beim ersten Tipp/Klick/Tastendruck.
+  musicBtn.setAttribute('aria-pressed', String(state.music));
+  musicBtn.textContent = state.music ? 'MUSIC: ON' : 'MUSIC: OFF';
+  if (state.music) {
+    const firstGesture = () => { if (state.music && !synth.playing && !ytBox) musicApply(); };
+    let early = false;
+    try { if (inArtifact) { getCtx(); early = audio.state === 'running'; } } catch (e) {}
+    if (early) musicApply();
+    else {
+      document.addEventListener('pointerdown', firstGesture, { once: true });
+      document.addEventListener('keydown', firstGesture, { once: true });
+      document.addEventListener('touchstart', firstGesture, { once: true, passive: true });
+    }
+  }
+
+  // ---------- Unterschrift (Canvas) ----------
+  const sig = (() => {
+    const c = $('sig'), box = $('sig-box'), g = c.getContext('2d');
+    let strokes = [], cur = null, drawing = false, last = null;
+    const INK = '#1A1030', W = 2.4;
+    function rect() { return c.getBoundingClientRect(); }
+    function size() {
+      const r = rect(), dpr = window.devicePixelRatio || 1;
+      c.width = Math.max(1, Math.round(r.width * dpr)); c.height = Math.max(1, Math.round(r.height * dpr));
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      redraw();
+    }
+    function style(ctx2, w) { ctx2.lineWidth = w; ctx2.lineCap = 'round'; ctx2.lineJoin = 'round'; ctx2.strokeStyle = INK; }
+    function redraw() {
+      const r = rect(); g.clearRect(0, 0, r.width, r.height); style(g, W);
+      strokes.forEach((s) => {
+        g.beginPath();
+        s.forEach(([x, y], i) => i ? g.lineTo(x * r.width, y * r.height) : g.moveTo(x * r.width, y * r.height));
+        if (s.length === 1) g.lineTo(s[0][0] * r.width + .1, s[0][1] * r.height);
+        g.stroke();
+      });
+    }
+    function pos(e) { const r = rect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
+    c.addEventListener('pointerdown', (e) => {
+      e.preventDefault(); drawing = true; cur = [pos(e)]; strokes.push(cur); last = cur[0];
+      try { c.setPointerCapture(e.pointerId); } catch (x) {}
+      const r = rect(); style(g, W); g.beginPath(); g.moveTo(last[0] * r.width, last[1] * r.height);
+      g.lineTo(last[0] * r.width + .1, last[1] * r.height); g.stroke();
+    });
+    c.addEventListener('pointermove', (e) => {
+      if (!drawing) return;
+      const p = pos(e), r = rect();
+      cur.push(p);
+      style(g, W); g.beginPath(); g.moveTo(last[0] * r.width, last[1] * r.height); g.lineTo(p[0] * r.width, p[1] * r.height); g.stroke();
+      last = p;
+      if (cur.length % 6 === 0) sfx.pen();
+    });
+    const end = () => { if (!drawing) return; drawing = false; cur = null; last = null; update(); };
+    c.addEventListener('pointerup', end); c.addEventListener('pointercancel', end); c.addEventListener('pointerleave', end);
+    function length() {
+      let L = 0; const r = rect();
+      strokes.forEach((s) => { for (let i = 1; i < s.length; i++) L += Math.hypot((s[i][0] - s[i - 1][0]) * r.width, (s[i][1] - s[i - 1][1]) * r.height); });
+      return L;
+    }
+    function has() { return length() > 60; }
+    function clear() { strokes = []; redraw(); update(); }
+    function png() {
+      // Weißer Grund + JPEG: hält das PDF klein (PNG mit Alpha bläht jsPDF stark auf)
+      const r = rect(), w = 900, h = Math.round(w * (r.height / r.width));
+      const off = document.createElement('canvas'); off.width = w; off.height = h;
+      const o = off.getContext('2d'); o.fillStyle = '#FFFFFF'; o.fillRect(0, 0, w, h); style(o, W * (w / r.width));
+      strokes.forEach((s) => {
+        o.beginPath();
+        s.forEach(([x, y], i) => i ? o.lineTo(x * w, y * h) : o.moveTo(x * w, y * h));
+        if (s.length === 1) o.lineTo(s[0][0] * w + .5, s[0][1] * h);
+        o.stroke();
+      });
+      return { dataUrl: off.toDataURL('image/jpeg', .85), ratio: h / w };
+    }
+    function update() { box.classList.toggle('has', has()); render(); }
+    if (window.ResizeObserver) new ResizeObserver(size).observe(box); else window.addEventListener('resize', size);
+    size();
+    return { has, clear, png };
+  })();
+  $('sig-clear').addEventListener('click', () => { sig.clear(); sfx.nope(); });
+
+  // ---------- Formular / Fortschritt ----------
+  const nameInput = $('name'), placeInput = $('place'), dateInput = $('date'), btnStart = $('btn-start');
+  const clean = (v, n) => (v || '').replace(/\s+/g, ' ').trim().slice(0, n);
+  function values() { return { name: clean(nameInput.value, 40), place: clean(placeInput.value, 40), date: clean(dateInput.value, 12) }; }
+  function missing() {
+    const v = values(), m = [];
+    if (v.name.length < 2) m.push('Name'); if (v.place.length < 2) m.push('Ort'); if (!/\d/.test(v.date)) m.push('Datum');
+    if (!sig.has()) m.push('Unterschrift');
+    return m;
+  }
+  function render() {
+    const v = values(), m = missing();
+    const c1 = v.name.length >= 2 && v.place.length >= 2 && /\d/.test(v.date), c2 = sig.has();
+    $('credits').textContent = String((c1 ? 1 : 0) + (c2 ? 1 : 0));
+    btnStart.disabled = m.length > 0;
+    const hint = $('hint');
+    hint.textContent = m.length ? 'FEHLT NOCH: ' + m.join(' · ').toUpperCase() : 'CREDITS VOLL — PRESS START';
+    hint.classList.toggle('ok', m.length === 0);
+    $('level-line').textContent = !$('printer').hidden ? 'BONUS STAGE: TICKET'
+      : v.name.length < 2 ? 'LEVEL 1: LESEN' : !c2 ? 'LEVEL 2: UNTERSCHRIFT' : m.length ? 'LEVEL 2: AUSFÜLLEN' : 'LEVEL 3: PRESS START';
+  }
+  function setMsg(el, text, err) { el.textContent = text || ''; el.classList.toggle('err', !!err); }
+  [nameInput, placeInput, dateInput].forEach((el) => el.addEventListener('input', () => {
+    try { localStorage.setItem('pb_name', nameInput.value); localStorage.setItem('pb_place', placeInput.value); } catch (e) {}
+    render();
+  }));
+  $('nda').addEventListener('submit', (e) => { e.preventDefault(); if (!btnStart.disabled) btnStart.click(); });
+
+  // ---------- Ticket ----------
+  function hash(str) {
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return h;
+  }
+  function buildBarcode(seed) {
+    const bar = $('t-bar'); bar.textContent = '';
+    let x = seed || 7;
+    const rnd = () => { x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0; return x / 4294967296; };
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < 56; i++) {
+      const el = document.createElement('i');
+      const w = 1 + Math.floor(rnd() * 3);
+      el.style.flex = w + ' ' + w + ' 0';
+      if (i % 2) el.className = 'gap';
+      frag.appendChild(el);
+    }
+    bar.appendChild(frag);
+  }
+  function fillTicket(name, when) {
+    const h = hash(name + '|' + when.getTime());
+    const no = 'PB-1999-' + String(h % 10000).padStart(4, '0');
+    $('t-no').textContent = no; $('t-stub-no').textContent = no;
+    $('t-name').textContent = name;
+    $('t-date').textContent = EVENT.date;
+    $('t-loc').textContent = EVENT.location;
+    $('t-info').textContent = EVENT.info;
+    $('t-time').textContent = when.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      + ' ' + when.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    buildBarcode(h);
+    return no;
+  }
+
+  // ---------- Abschicken + Drucker ----------
+  const printer = $('printer'), machine = $('machine'), ticket = $('ticket'), led = $('led'), status = $('status'),
+        after = $('after'), mOut = $('m-out'), msgSubmit = $('msg-submit');
+  let tickTimer = null;
+  function setLed(mode, text) { led.className = 'led' + (mode ? ' ' + mode : ''); status.textContent = text; }
+
+  async function uploadToServer(payload) {
+    const r = await fetch(UPLOAD_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+  }
+
+  btnStart.addEventListener('click', async () => {
+    if (missing().length) { render(); sfx.nope(); return; }
+    const v = values(), when = new Date(), s = sig.png();
+    sfx.coin();
+    const signed = { name: v.name, place: v.place, date: v.date, signedAt: when, sigPng: s.dataUrl, sigRatio: s.ratio };
+    if (UPLOAD_URL) {
+      btnStart.disabled = true; setMsg(msgSubmit, 'Sende NDA...');
+      try { await uploadToServer({ name: v.name, place: v.place, date: v.date, signedAt: when.toISOString(), signaturePng: s.dataUrl }); setMsg(msgSubmit, ''); }
+      catch (e) { setMsg(msgSubmit, 'Senden fehlgeschlagen. Verbindung prüfen und nochmal Press Start.', true); sfx.nope(); btnStart.disabled = false; return; }
+    }
+    signed.ticket = fillTicket(v.name, when);
+    state.signed = signed;
+    setMsg(msgSubmit, 'NDA angenommen. Der Automat druckt.');
+    ticket.classList.remove('out', 'torn'); machine.classList.remove('done'); mOut.classList.remove('loose'); after.hidden = true;
+    printer.hidden = false;
+    $('level-line').textContent = 'BONUS STAGE: TICKET';
+    setLed('busy', 'PRINTING...');
+    void ticket.offsetWidth;
+    machine.classList.add('printing');
+    ticket.addEventListener('animationend', onEmerged, { once: true });
+    printer.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    clearInterval(tickTimer);
+    tickTimer = setInterval(sfx.tick, reduced ? 60 : 105);
+    btnStart.disabled = true;
+  });
+
+  function onEmerged(e) {
+    if (e && e.animationName !== 'emerge') { ticket.addEventListener('animationend', onEmerged, { once: true }); return; }
+    clearInterval(tickTimer); tickTimer = null;
+    machine.classList.remove('printing'); machine.classList.add('done');
+    ticket.classList.add('out');
+    setLed('done', 'DONE — ABREISSEN');
+    sfx.done();
+    setTimeout(() => {
+      mOut.classList.add('loose');
+      ticket.classList.add('torn');
+      after.hidden = false;
+      render();
+    }, 380);
+  }
+
+  $('btn-back').addEventListener('click', () => {
+    sfx.coin();
+    printer.hidden = true;
+    ticket.classList.remove('out', 'torn'); machine.classList.remove('done', 'printing'); mOut.classList.remove('loose');
+    after.hidden = true; setLed('', 'READY'); setMsg(msgSubmit, '');
+    render();
+    $('nda').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+  });
+
+  // ---------- Signiertes NDA als PDF ----------
+  function buildSignedPdf(d) {
+    const J = window.jspdf && window.jspdf.jsPDF;
+    if (!J) return null;
+    const doc = new J({ unit: 'mm', format: 'a4' });
+    const W = 210, M = 20, TW = W - 2 * M;
+    doc.setFillColor(6, 4, 11); doc.rect(0, 0, W, 50, 'F');
+    doc.setFillColor(255, 45, 149); doc.rect(0, 50, W, 1.6, 'F');
+    doc.setFillColor(48, 227, 227); doc.rect(0, 51.6, W, 1.2, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(34); doc.setTextColor(255, 45, 149);
+    doc.text(EVENT.name, M, 25);
+    doc.setFontSize(10); doc.setTextColor(48, 227, 227);
+    doc.text('INSERT COIN TO CONTINUE  ·  PLAYER EDITION 1999', M, 34);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(245, 236, 220);
+    doc.text('NDA · Geheimhaltungsvereinbarung', M, 42);
+
+    let y = 66;
+    const para = (txt, size, bold, gapAfter) => {
+      doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(size);
+      const lines = doc.splitTextToSize(txt, TW);
+      doc.text(lines, M, y);
+      y += lines.length * size * 0.48 + (gapAfter == null ? 3 : gapAfter);
+    };
+    doc.setTextColor(26, 16, 48);
+    para('Hiermit bestätige ich,', 11, false, 4);
+    para('Name (Druckbuchstaben): ' + d.name.toUpperCase(), 11, true, 6);
+    para('dass ich an der Veranstaltung ' + EVENT.name + ' teilnehme, Stillschweigen über alles bewahre, was dort passiert, und die folgenden fünf Regeln gelesen, verstanden und akzeptiert habe.', 11, false, 8);
+    RULES.forEach((r, i) => {
+      doc.setTextColor(181, 18, 95); para('REGEL ' + (i + 1), 10, true, 1.5);
+      doc.setTextColor(26, 16, 48); para(r, 10.5, false, 5);
+    });
+    doc.setTextColor(181, 18, 95); para('STRAFE', 10, true, 1.5);
+    doc.setTextColor(26, 16, 48); para(PENALTY, 10.5, false, 10);
+
+    // Unterschriftsblock
+    const sigW = 70, sigH = Math.min(26, sigW * d.sigRatio);
+    const lineY = y + sigH + 2;
+    try { doc.addImage(d.sigPng, 'JPEG', M + 95, lineY - sigH - 1, sigW, sigH); } catch (e) {}
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(26, 16, 48);
+    doc.text((d.place + ', ' + d.date).toUpperCase(), M, lineY - 2);
+    doc.setDrawColor(26, 16, 48); doc.setLineWidth(.4);
+    doc.line(M, lineY, M + 70, lineY); doc.line(M + 95, lineY, W - M, lineY);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(107, 90, 132);
+    doc.text('Ort, Datum', M, lineY + 5); doc.text('Unterschrift', M + 95, lineY + 5);
+
+    const stamp = d.signedAt.toLocaleDateString('de-DE') + ' ' + d.signedAt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    y = lineY + 20;
+    doc.setFillColor(6, 4, 11); doc.rect(M, y - 6, TW, 12, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(255, 210, 63);
+    doc.text('DIGITAL SIGNIERT ' + stamp + '  ·  TICKET ' + d.ticket, M + 4, y + 1.5);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(107, 90, 132);
+    doc.text(EVENT.name + ' · Player Edition 1999 · Seite 1/1', M, 287);
+    return doc.output('blob');
+  }
+  function anchorDownload(filename, blob) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+  const btnPdf = $('btn-pdf'), msgAfter = $('msg-after');
+  btnPdf.addEventListener('click', async () => {
+    if (!state.signed) return;
+    sfx.coin();
+    btnPdf.disabled = true; const label = btnPdf.textContent; btnPdf.textContent = 'Erstelle PDF...';
+    setMsg(msgAfter, '');
+    try {
+      const blob = buildSignedPdf(state.signed);
+      if (!blob) throw { code: 'nopdf' };
+      const filename = EVENT.pdfFilename + '-' + state.signed.ticket.toLowerCase() + '.pdf';
+      const dl = await cap('downloads');
+      if (dl === undefined) anchorDownload(filename, blob);
+      else if (dl === null) throw { code: 'unavailable' };
+      else await dl.save({ filename, data: blob });
+      setMsg(msgAfter, 'Gespeichert als ' + filename + '.');
+    } catch (e) {
+      const code = e && e.code;
+      if (code === 'declined') setMsg(msgAfter, 'Speichern abgebrochen. Dein Ticket bleibt trotzdem gültig.', true);
+      else if (code === 'rate_limited') setMsg(msgAfter, 'Kurz warten, dann nochmal drücken.', true);
+      else if (code === 'nopdf') setMsg(msgAfter, 'PDF-Modul konnte nicht geladen werden. Screenshot vom Ticket reicht.', true);
+      else setMsg(msgAfter, 'Speichern ist in dieser Ansicht nicht möglich. Screenshot vom Ticket reicht.', true);
+      sfx.nope();
+    } finally { btnPdf.disabled = false; btnPdf.textContent = label; }
+  });
+
+  render();
+
+  // ---------- Hintergrund-Arcade (Canvas, komplett stumm) ----------
+  // Sterne, Sternschnuppen, Skyline mit blinkenden Fenstern, Sonne, Palmen, Helikopter mit Suchscheinwerfer,
+  // Flamingos, Bannerflieger, Feuerwerk, Verfolgungsjagden Ferrari vs. Polizei, Score-Popups.
+  (() => {
+    const cv = $('cars'); if (!cv || !cv.getContext) return;
+    const g = cv.getContext('2d');
+    const PAL = { r: '#E0162B', R: '#8A0E1E', k: '#0B0810', g: '#7FE3F0', w: '#F2EEF5', y: '#FFD23F', b: '#3B7CFF', p: '#FF2D95', G: '#B8B8C4', t: '#1A1A22', o: '#FF7A1A', m: '#4A3A6B', n: '#FF8DC7', c: '#30E3E3', d: '#2B2142' };
+    const FERRARI = [
+      '.........rrrrrrrr.......',
+      '.......rrkggggggkrr.....',
+      '.....rrrrkggggggkrrrr...',
+      '...rrrrrrrrrrrrrrrrrrrr.',
+      '.orrrrrrrrrrrrrrrrrrrrry',
+      '.orrrrrrrrrrrrrrrrrrrrry',
+      '.RRRRRRRRRRRRRRRRRRRRRRR',
+      '..ttGGtt.........ttGGtt.',
+      '..ttGGtt.........ttGGtt.',
+    ];
+    const POLICE = (f) => [
+      f ? '.........pppbbb.........' : '.........bbbppp.........',
+      '........kkkkkkkk........',
+      '......wwkggggggkww......',
+      '....wwwwkggggggkwwww....',
+      '..wwwwwwwwwwwwwwwwwwwwy.',
+      '.owwwwwwwwwwwwwwwwwwwwwy',
+      '.kkkkkkkkkkwwwwkkkkkkkkk',
+      '.kkkkkkkkkkwwwwkkkkkkkkk',
+      '..ttGGtt.........ttGGtt.',
+      '..ttGGtt.........ttGGtt.',
+    ];
+    const PALM = [
+      '....gg..gg....', '..gg..gg..gg..', '.g...gggg...g.', '....gg..gg....', '......mm......',
+      '......mm......', '......mm......', '.....mm.......', '.....mm.......', '....mm........',
+    ];
+    const HELI = (f) => [
+      f ? '....GGGGGGGGGGGGGGGG....' : '.........GGGGGG.........',
+      '...........d............',
+      '.........dddddddd.......',
+      'dd......dddggggddd......',
+      '.dddddddddddggggddd.....',
+      '...dd...ddddddddddd.....',
+      '.........dddddddd.......',
+      '..........tt..tt........',
+    ];
+    const FLAMINGO = (f) => f
+      ? ['..nn..', '.nnnn.', 'nnnnnn', '...n..', '...n..']
+      : ['......', 'nnnnnn', '.nnnn.', '...n..', '...n..'];
+    const PLANE = [
+      '......ww......', '......ww......', 'wwwwwwwwwwwwwc', '.wwwwwwwwwwwwc', '......ww......', '....wwwwww....',
+    ];
+    const BIKE = [
+      '......pp..........', '.....pppp.........', '....kkkkkk........', '...kkkkkkkkk......',
+      '.tGt.......tGt....', '.tGt.......tGt....',
+    ];
+    function sprite(rows, pal) {
+      const c = document.createElement('canvas'); c.width = rows[0].length; c.height = rows.length;
+      const x = c.getContext('2d');
+      rows.forEach((row, j) => [...row].forEach((ch, i) => { if (pal[ch]) { x.fillStyle = pal[ch]; x.fillRect(i, j, 1, 1); } }));
+      return c;
+    }
+    const S = {
+      f: sprite(FERRARI, PAL), p: [sprite(POLICE(0), PAL), sprite(POLICE(1), PAL)],
+      palm: sprite(PALM, { g: '#1E8F7E', m: '#3A2B5C' }),
+      heli: [sprite(HELI(0), PAL), sprite(HELI(1), PAL)],
+      fl: [sprite(FLAMINGO(0), PAL), sprite(FLAMINGO(1), PAL)],
+      plane: sprite(PLANE, PAL), bike: sprite(BIKE, PAL),
+    };
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    const FIRE = ['#FF2D95', '#30E3E3', '#FFD23F', '#C13BFF', '#FF7A1A', '#F2EEF5'];
+    const BANNER = EVENT.name + ' · ' + EVENT.date.toUpperCase() + ' · ' + EVENT.location.toUpperCase();
+
+    let W = 0, H = 0, dpr = 1, stars = [], skyline = null, windows = [];
+    const horizonY = () => H * 0.635;
+    function buildStars() {
+      stars = [];
+      for (let i = 0; i < 90; i++) stars.push({ x: Math.random() * W, y: Math.random() * H * .58, s: Math.random() < .25 ? 2 : 1, ph: Math.random() * 6.3, sp: rnd(.8, 2.4) });
+    }
+    function buildSkyline() {
+      skyline = document.createElement('canvas'); skyline.width = Math.max(1, Math.round(W * dpr)); skyline.height = Math.round(130 * dpr);
+      const x = skyline.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0);
+      windows = [];
+      let px = -10;
+      while (px < W + 10) {
+        const bw = Math.round(rnd(18, 54)), bh = Math.round(rnd(26, 118));
+        const top = 130 - bh;
+        x.fillStyle = '#0D0918'; x.fillRect(px, top, bw, bh);
+        x.fillStyle = '#1C1230'; x.fillRect(px, top, bw, 2);
+        if (Math.random() < .35) { x.fillStyle = pick(['#FF2D95', '#30E3E3']); x.fillRect(px + bw / 2 - 1, top - 8, 2, 8); }
+        for (let wy = top + 6; wy < 124; wy += 7) for (let wx = px + 4; wx < px + bw - 4; wx += 6) {
+          if (Math.random() < .55) windows.push({ x: wx, y: wy, on: Math.random() < .7, c: Math.random() < .15 ? '#30E3E3' : '#FFD23F' });
+        }
+        px += bw + Math.round(rnd(2, 8));
+      }
+    }
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      g.setTransform(dpr, 0, 0, dpr, 0, 0); g.imageSmoothingEnabled = false;
+      buildStars(); buildSkyline();
+    }
+    window.addEventListener('resize', resize); resize();
+
+    function drawSprite(img, x, y, scale, flip) {
+      const w = img.width * scale, h = img.height * scale;
+      g.save();
+      if (flip) { g.translate(x + w, y); g.scale(-1, 1); g.drawImage(img, 0, 0, w, h); }
+      else g.drawImage(img, x, y, w, h);
+      g.restore();
+    }
+    function drawSun() {
+      const cx = W / 2, cy = horizonY(), r = Math.min(W, H) * 0.14;
+      g.save(); g.globalAlpha = .5;
+      g.beginPath(); g.rect(0, 0, W, cy); g.clip();
+      const grad = g.createLinearGradient(0, cy - r, 0, cy);
+      grad.addColorStop(0, '#FFD23F'); grad.addColorStop(.55, '#FF6DBF'); grad.addColorStop(1, '#C13BFF');
+      g.fillStyle = grad; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#06040B';
+      for (let i = 0; i < 7; i++) { const y = cy - r * .55 + i * r * .09, h = 1 + i * 1.3; g.fillRect(cx - r, y, r * 2, h); }
+      g.restore();
+    }
+    function drawStars(t) {
+      stars.forEach((s) => {
+        g.globalAlpha = .35 + .65 * (0.5 + 0.5 * Math.sin(t * s.sp + s.ph));
+        g.fillStyle = s.s === 2 ? '#FFD23F' : '#F2EEF5'; g.fillRect(s.x, s.y, s.s, s.s);
+      });
+      g.globalAlpha = 1;
+    }
+    function drawSkyline() {
+      const y = horizonY() - 130 + 2;
+      g.save(); g.globalAlpha = .92;
+      g.drawImage(skyline, 0, 0, skyline.width, skyline.height, 0, y, W, 130);
+      windows.forEach((w) => { if (w.on) { g.fillStyle = w.c; g.fillRect(w.x, y + w.y, 2, 3); } });
+      g.restore();
+    }
+
+    // Objekte
+    const chases = [], palms = [], shots = [], helis = [], flocks = [], planes = [], fires = [], pops = [];
+    let next = { chase: .8, palm: .4, shot: 2, heli: 5, flock: 3, plane: 9, fire: 2.5, win: .3 };
+    let lightT = 0, lightF = 0, flapT = 0, flapF = 0, last = performance.now(), raf = null, T = 0;
+
+    function spawnChase() {
+      const dir = Math.random() < .5 ? 1 : -1, lane = Math.random();
+      const scale = Math.round(2 + lane * 3), speed = 150 + lane * 300;
+      const y = H * (0.69 + lane * 0.25), w = 24 * scale;
+      const cars = [{ kind: 'f', off: 0 }];
+      const n = 2 + Math.floor(Math.random() * 2);
+      for (let i = 1; i <= n; i++) cars.push({ kind: 'p', off: -(i * rnd(1.6, 2.3)) * w, wob: Math.random() * 6 });
+      if (Math.random() < .5) cars.push({ kind: 'b', off: -(n + 1) * rnd(1.4, 1.9) * w, wob: Math.random() * 6 });
+      const startX = dir > 0 ? -w * (n + 4) : W + w * (n + 4);
+      chases.push({ dir, scale, speed, y, w, x: startX, cars, t: 0, scored: false });
+    }
+    function spawnPalm() { const scale = Math.round(rnd(2, 4)); palms.push({ x: W + 20, y: horizonY() - PALM.length * scale + 2, scale, speed: 18 + scale * 6 }); }
+    function spawnShot() { const x = rnd(W * .1, W * .9), y = rnd(10, H * .35); shots.push({ x, y, vx: rnd(-520, -320), vy: rnd(160, 260), life: .9, t: 0 }); }
+    function spawnHeli() {
+      const dir = Math.random() < .5 ? 1 : -1, scale = Math.round(rnd(2, 3));
+      helis.push({ dir, scale, x: dir > 0 ? -30 * scale : W + 30 * scale, y: rnd(H * .12, H * .36), speed: rnd(70, 120), t: 0, bob: Math.random() * 6 });
+    }
+    function spawnFlock() {
+      const dir = Math.random() < .5 ? 1 : -1, scale = 2, n = 5 + Math.floor(Math.random() * 3), birds = [];
+      for (let i = 0; i < n; i++) birds.push({ dx: -i * 10 * scale, dy: Math.abs(i - (n - 1) / 2) * 6 * scale, ph: i * .4 });
+      flocks.push({ dir, scale, x: dir > 0 ? -n * 12 * scale : W + n * 12 * scale, y: rnd(H * .08, H * .32), speed: rnd(55, 85), birds, t: 0 });
+    }
+    function spawnPlane() { const dir = Math.random() < .5 ? 1 : -1; planes.push({ dir, scale: 2, x: dir > 0 ? -400 : W + 400, y: rnd(H * .06, H * .22), speed: 75, t: 0 }); }
+    function spawnFire() {
+      fires.push({ x: rnd(W * .08, W * .92), y: H * .64, vy: -rnd(260, 360), ty: rnd(H * .14, H * .42), c: pick(FIRE), parts: null, t: 0 });
+    }
+    function burst(f) {
+      f.parts = [];
+      const n = 26 + Math.floor(Math.random() * 14), s = rnd(90, 160);
+      for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2 + Math.random() * .2; f.parts.push({ x: f.x, y: f.y, vx: Math.cos(a) * s * rnd(.6, 1), vy: Math.sin(a) * s * rnd(.6, 1), life: rnd(.9, 1.5) }); }
+      f.t = 0;
+      pops.push({ x: f.x, y: f.y - 20, text: pick(['BOOM', 'NICE', 'COMBO', '+500']), c: f.c, t: 0, life: 1.2 });
+    }
+
+    function frame(now) {
+      const dt = Math.min(.05, (now - last) / 1000); last = now; T += dt;
+      g.clearRect(0, 0, W, H);
+      drawStars(T);
+      // Sternschnuppen
+      next.shot -= dt; if (next.shot <= 0) { spawnShot(); next.shot = rnd(3, 8); }
+      for (let i = shots.length - 1; i >= 0; i--) {
+        const s = shots[i]; s.t += dt; s.x += s.vx * dt; s.y += s.vy * dt;
+        const a = Math.max(0, 1 - s.t / s.life);
+        g.save(); g.globalAlpha = a; g.strokeStyle = '#F2EEF5'; g.lineWidth = 2;
+        g.beginPath(); g.moveTo(s.x, s.y); g.lineTo(s.x - s.vx * .12, s.y - s.vy * .12); g.stroke(); g.restore();
+        if (s.t > s.life) shots.splice(i, 1);
+      }
+      drawSun();
+      // Skyline + blinkende Fenster
+      next.win -= dt; if (next.win <= 0) { next.win = .35; for (let k = 0; k < 6; k++) { const w = pick(windows); if (w) w.on = !w.on; } }
+      drawSkyline();
+      // Palmen
+      next.palm -= dt; if (next.palm <= 0) { spawnPalm(); next.palm = rnd(3, 7); }
+      for (let i = palms.length - 1; i >= 0; i--) {
+        const p = palms[i]; p.x -= p.speed * dt; drawSprite(S.palm, p.x, p.y, p.scale, false);
+        if (p.x < -PALM[0].length * p.scale) palms.splice(i, 1);
+      }
+      // Flügelschlag / Blaulicht-Takt
+      flapT += dt; if (flapT > .16) { flapT = 0; flapF ^= 1; }
+      lightT += dt; if (lightT > .12) { lightT = 0; lightF ^= 1; }
+      // Helikopter mit Suchscheinwerfer
+      next.heli -= dt; if (next.heli <= 0 && helis.length < 2) { spawnHeli(); next.heli = rnd(10, 18); }
+      for (let i = helis.length - 1; i >= 0; i--) {
+        const h = helis[i]; h.t += dt; h.x += h.dir * h.speed * dt;
+        const y = h.y + Math.sin(h.t * 2 + h.bob) * 4, w = 24 * h.scale, hh = 8 * h.scale;
+        const sweep = Math.sin(h.t * .9 + h.bob) * .35;
+        const bx = h.x + w / 2, by = y + hh, gy = horizonY() + H * .12;
+        g.save(); g.globalAlpha = .18; g.fillStyle = '#FFD23F';
+        g.beginPath(); g.moveTo(bx, by); g.lineTo(bx + (gy - by) * (sweep - .22), gy); g.lineTo(bx + (gy - by) * (sweep + .22), gy); g.closePath(); g.fill();
+        g.restore();
+        drawSprite(S.heli[lightF], h.x, y, h.scale, h.dir < 0);
+        if (lightF) { g.fillStyle = '#E0162B'; g.fillRect(h.x + (h.dir > 0 ? w - 3 * h.scale : 2 * h.scale), y + 3 * h.scale, h.scale, h.scale); }
+        if ((h.dir > 0 && h.x > W + 60) || (h.dir < 0 && h.x < -w - 60)) helis.splice(i, 1);
+      }
+      // Flamingos in Formation
+      next.flock -= dt; if (next.flock <= 0 && flocks.length < 2) { spawnFlock(); next.flock = rnd(9, 16); }
+      for (let i = flocks.length - 1; i >= 0; i--) {
+        const f = flocks[i]; f.t += dt; f.x += f.dir * f.speed * dt;
+        f.birds.forEach((b) => drawSprite(S.fl[(flapF + Math.round(b.ph)) & 1], f.x + f.dir * b.dx, f.y + b.dy + Math.sin(f.t * 3 + b.ph) * 2, f.scale, f.dir < 0));
+        if ((f.dir > 0 && f.x - f.birds.length * 12 * f.scale > W + 20) || (f.dir < 0 && f.x + f.birds.length * 12 * f.scale < -20)) flocks.splice(i, 1);
+      }
+      // Bannerflieger
+      next.plane -= dt; if (next.plane <= 0 && planes.length === 0) { spawnPlane(); next.plane = rnd(22, 36); }
+      for (let i = planes.length - 1; i >= 0; i--) {
+        const p = planes[i]; p.t += dt; p.x += p.dir * p.speed * dt;
+        const y = p.y + Math.sin(p.t * 1.4) * 5, pw = 14 * p.scale;
+        g.save(); g.font = '9px "Press Start 2P", monospace'; g.textBaseline = 'middle';
+        const tw = g.measureText(BANNER).width + 20, bh = 20;
+        const bx = p.dir > 0 ? p.x - 8 - tw : p.x + pw + 8;
+        g.strokeStyle = '#B8B8C4'; g.lineWidth = 1; g.beginPath();
+        g.moveTo(p.dir > 0 ? p.x : p.x + pw, y + 5); g.lineTo(p.dir > 0 ? bx + tw : bx, y + 6 + Math.sin(p.t * 2) * 2); g.stroke();
+        g.fillStyle = '#FF2D95'; g.fillRect(bx, y - 3 + Math.sin(p.t * 2) * 2, tw, bh);
+        g.fillStyle = '#15051A'; g.fillText(BANNER, bx + 10, y - 3 + bh / 2 + Math.sin(p.t * 2) * 2);
+        g.restore();
+        drawSprite(S.plane, p.x, y, p.scale, p.dir < 0);
+        if ((p.dir > 0 && p.x - tw > W + 40) || (p.dir < 0 && p.x + pw + tw < -40)) planes.splice(i, 1);
+      }
+      // Feuerwerk
+      next.fire -= dt; if (next.fire <= 0 && fires.length < 4) { spawnFire(); next.fire = rnd(2.5, 6); }
+      for (let i = fires.length - 1; i >= 0; i--) {
+        const f = fires[i];
+        if (!f.parts) {
+          f.y += f.vy * dt; g.fillStyle = f.c; g.fillRect(f.x - 1, f.y, 2, 6);
+          g.globalAlpha = .4; g.fillRect(f.x - 1, f.y + 8, 2, 10); g.globalAlpha = 1;
+          if (f.y <= f.ty) burst(f);
+        } else {
+          f.t += dt; let alive = 0;
+          f.parts.forEach((q) => {
+            if (f.t > q.life) return; alive++;
+            q.vy += 110 * dt; q.x += q.vx * dt; q.y += q.vy * dt;
+            g.globalAlpha = Math.max(0, 1 - f.t / q.life); g.fillStyle = f.t < .15 ? '#F2EEF5' : f.c;
+            const sz = f.t < .5 ? 3 : 2; g.fillRect(q.x, q.y, sz, sz);
+          });
+          g.globalAlpha = 1;
+          if (!alive) fires.splice(i, 1);
+        }
+      }
+      // Verfolgungsjagden
+      next.chase -= dt; if (next.chase <= 0 && chases.length < 3) { spawnChase(); next.chase = rnd(3, 6.5); }
+      for (let i = chases.length - 1; i >= 0; i--) {
+        const c = chases[i]; c.t += dt; c.x += c.dir * c.speed * dt;
+        let minX = Infinity, maxX = -Infinity;
+        c.cars.forEach((car) => {
+          const wob = car.wob ? Math.sin(c.t * 3 + car.wob) * c.scale * 2 : 0;
+          const x = c.x + c.dir * car.off + wob;
+          const img = car.kind === 'f' ? S.f : car.kind === 'b' ? S.bike : S.p[lightF];
+          const y = c.y - img.height * c.scale;
+          g.save(); g.globalAlpha = .28; g.fillStyle = car.kind === 'f' ? '#FF6DBF' : '#7FE3F0';
+          for (let k = 0; k < 3; k++) {
+            const len = (8 + k * 9) * c.scale * .6, ly = y + (3 + k * 2) * c.scale;
+            g.fillRect(c.dir > 0 ? x - len - 2 * c.scale : x + c.w + 2 * c.scale, ly, len, Math.max(1, c.scale * .5));
+          }
+          g.restore();
+          if (car.kind !== 'f') {
+            const lx = x + c.w / 2, ly = y;
+            const grad = g.createRadialGradient(lx, ly, 0, lx, ly, c.w * .9);
+            grad.addColorStop(0, lightF ? 'rgba(255,45,149,.45)' : 'rgba(59,124,255,.45)'); grad.addColorStop(1, 'rgba(0,0,0,0)');
+            g.fillStyle = grad; g.fillRect(lx - c.w, ly - c.w, c.w * 2, c.w * 2);
+          }
+          drawSprite(img, x, y, c.scale, c.dir < 0);
+          minX = Math.min(minX, x); maxX = Math.max(maxX, x + c.w);
+        });
+        if (!c.scored && Math.abs(c.x + c.w / 2 - W / 2) < c.speed * dt + 2) {
+          c.scored = true; pops.push({ x: c.x + c.w / 2, y: c.y - 12 * c.scale, text: pick(['+1000', 'WANTED', 'ESCAPE!', 'x2']), c: '#FFD23F', t: 0, life: 1.4 });
+        }
+        if ((c.dir > 0 && minX > W + 40) || (c.dir < 0 && maxX < -40)) chases.splice(i, 1);
+      }
+      // Score-Popups
+      g.save(); g.font = '10px "Press Start 2P", monospace'; g.textAlign = 'center';
+      for (let i = pops.length - 1; i >= 0; i--) {
+        const p = pops[i]; p.t += dt;
+        g.globalAlpha = Math.max(0, 1 - p.t / p.life); g.fillStyle = p.c;
+        g.fillText(p.text, p.x, p.y - p.t * 40);
+        if (p.t > p.life) pops.splice(i, 1);
+      }
+      g.restore();
+      raf = requestAnimationFrame(frame);
+    }
+    function start() { if (raf == null) { last = performance.now(); raf = requestAnimationFrame(frame); } }
+    function stop() { if (raf != null) { cancelAnimationFrame(raf); raf = null; } }
+    if (reduced) { const still = () => { g.clearRect(0, 0, W, H); drawStars(0); drawSun(); drawSkyline(); }; still(); window.addEventListener('resize', still); return; }
+    document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
+    start();
+  })();
+</script>
+</body>
+</html>
